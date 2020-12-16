@@ -1,9 +1,10 @@
 import type { Dictionary } from '@stoplight/types';
 
 import { isMirroredNode, isRegularNode } from '../../guards';
+import { isObject } from '../../utils';
 import { BaseNode } from '../BaseNode';
 import type { RegularNode } from '../RegularNode';
-import type { SchemaAnnotations, SchemaCombinerName, SchemaMeta, SchemaNodeKind } from '../types';
+import type { SchemaAnnotations, SchemaCombinerName, SchemaMeta, SchemaNode, SchemaNodeKind } from '../types';
 import { MirroredReferenceNode } from './MirroredReferenceNode';
 
 export class MirroredRegularNode extends BaseNode implements RegularNode {
@@ -81,5 +82,9 @@ export class MirroredRegularNode extends BaseNode implements RegularNode {
 
     this._children = children;
     return children;
+  }
+
+  static [Symbol.hasInstance](instance: unknown) {
+    return isObject(instance) && instance instanceof BaseNode && isRegularNode(instance as SchemaNode);
   }
 }

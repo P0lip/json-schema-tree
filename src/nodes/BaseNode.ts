@@ -23,4 +23,8 @@ export abstract class BaseNode {
     this.id = String(SEED++);
     this.subpath = [];
   }
+
+  static [Symbol.hasInstance](instance: unknown) {
+    return false;
+  }
 }
