@@ -1,27 +1,30 @@
-import type { Dictionary } from '@stoplight/types';
+import { action, computed, observable, reaction } from 'mobx';
 
+import type { SchemaDialect } from '../../dialects/SchemaDialect';
 import { isRegularNode } from '../../guards';
+import type { SchemaFragment } from '../../types';
 import { isNonNullable } from '../../utils';
 import { BaseNode } from '../BaseNode';
 import type { ReferenceNode } from '../ReferenceNode';
 import type { RegularNode } from '../RegularNode';
-import type { SchemaAnnotations, SchemaCombinerName, SchemaNodeKind } from '../types';
+import type { SchemaCombinerName, SchemaNodeKind } from '../types';
 import { MirroredReferenceNode } from './MirroredReferenceNode';
 
 export class MirroredRegularNode extends BaseNode implements RegularNode {
-  public readonly $id!: string | null;
-  public readonly types!: SchemaNodeKind[] | null;
+  public readonly dialect!: SchemaDialect;
+  public readonly $id!: string;
+  public readonly types!: Set<SchemaNodeKind>;
   public readonly primaryType!: SchemaNodeKind | null;
-  public readonly combiners!: SchemaCombinerName[] | null;
+  public readonly combiners!: Set<SchemaCombinerName>;
 
   public readonly required!: string[] | null;
-  public readonly enum!: unknown[] | null;
+  public readonly enum!: Set<unknown>;
   public readonly format!: string | null;
   public readonly title!: string | null;
   public readonly deprecated!: boolean;
 
-  public readonly annotations!: Readonly<Partial<Dictionary<unknown, SchemaAnnotations>>>;
-  public readonly validations!: Readonly<Dictionary<unknown>>;
+  public readonly annotations!: Record<string, unknown>;
+  public readonly validations!: Record<string, unknown>;
 
   public readonly simple!: boolean;
   public readonly unknown!: boolean;
@@ -54,15 +57,36 @@ export class MirroredRegularNode extends BaseNode implements RegularNode {
     return this._this;
   }
 
+  public toJSON(): SchemaFragment {
+    return {
+      $ref: this.mirroredNode.$id,
+    };
+  }
+
   private readonly _this: MirroredRegularNode;
 
+  @observable.shallow
   private _children?: (MirroredRegularNode | MirroredReferenceNode)[];
 
+  private _reaction: any;
+
+  @computed
   public get children(): (MirroredRegularNode | MirroredReferenceNode)[] | null | undefined {
     const referencedChildren = this.mirroredNode.children;
 
     if (!isNonNullable(referencedChildren)) {
       return referencedChildren;
+    }
+
+    if (!this._reaction) {
+      console.log('setting up reaction', referencedChildren);
+      // todo: setup reaction
+      this._reaction = reaction(
+        () => referencedChildren,
+        action(() => {
+          console.log('foo!');
+        }),
+      );
     }
 
     if (this._children === void 0) {
@@ -84,6 +108,7 @@ export class MirroredRegularNode extends BaseNode implements RegularNode {
       const mirroredChild = isRegularNode(child) ? new MirroredRegularNode(child) : new MirroredReferenceNode(child);
 
       mirroredChild.parent = this._this;
+      // @ts-expect-error
       mirroredChild.subpath = child.subpath;
       this.cache.set(child, mirroredChild);
       children.push(mirroredChild);

@@ -1,5 +1,6 @@
 import { extractPointerFromRef, extractSourceFromRef, resolveInlineRef } from '@stoplight/json';
 
+import { SharedSchemaDialect } from '../dialects/Base/SharedDialect';
 import { ResolvingError } from '../errors';
 import { RootNode } from '../nodes/RootNode';
 import type { SchemaFragment } from '../types';
@@ -17,7 +18,12 @@ export class SchemaTree {
     this.walker = new Walker(this.root, {
       mergeAllOf: this.opts?.mergeAllOf !== false,
       resolveRef: opts?.refResolver === null ? null : this.resolveRef,
+      schemaDialect: opts?.dialect ?? new SharedSchemaDialect(),
     });
+  }
+
+  public toJSON(): SchemaFragment {
+    return this.root.toJSON();
   }
 
   public destroy() {

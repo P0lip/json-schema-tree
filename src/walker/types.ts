@@ -1,3 +1,4 @@
+import type { SchemaDialect } from '../dialects/SchemaDialect';
 import type { RegularNode, SchemaNode } from '../nodes';
 import type { RootNode } from '../nodes/RootNode';
 import type { SchemaFragment } from '../types';
@@ -7,6 +8,7 @@ export type WalkerRefResolver = (path: string[] | null, $ref: string) => SchemaF
 export type WalkingOptions = {
   mergeAllOf: boolean;
   resolveRef: WalkerRefResolver | null;
+  schemaDialect: SchemaDialect;
 };
 
 export type WalkerSnapshot = {

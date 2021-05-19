@@ -1,6 +1,6 @@
 import { isLocalRef } from '@stoplight/json';
 
-import { unwrapStringOrNull } from '../accessors/unwrap';
+import { unwrapStringOrNull } from '../dialects/accessors/unwrap';
 import { isReferenceNode, isSchemaNode } from '../guards';
 import type { SchemaFragment } from '../types';
 import { BaseNode } from './BaseNode';
@@ -12,6 +12,10 @@ export class ReferenceNode extends BaseNode {
     super(fragment);
 
     this.value = unwrapStringOrNull(fragment.$ref);
+  }
+
+  public toJSON(): SchemaFragment {
+    return this.fragment;
   }
 
   public get external() {

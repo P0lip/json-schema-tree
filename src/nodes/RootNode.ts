@@ -10,4 +10,12 @@ export class RootNode extends BaseNode {
     super(fragment);
     this.children = [];
   }
+
+  public toJSON(): SchemaFragment {
+    if (this.children.length !== 1) {
+      return this.children.map(child => child.toJSON());
+    }
+
+    return this.children[0].toJSON();
+  }
 }

@@ -1,7 +1,9 @@
 import { EventEmitter } from '@stoplight/lifecycle';
 import type { Dictionary } from '@stoplight/types';
 import createMagicError from 'magic-error';
+import { makeObservable, observable, runInAction } from 'mobx';
 
+import type { SchemaDialect } from '../dialects/SchemaDialect';
 import { MergingError } from '../errors';
 import { isMirroredNode, isReferenceNode, isRegularNode, isRootNode } from '../guards';
 import { mergeAllOf } from '../mergers/mergeAllOf';
@@ -27,6 +29,7 @@ export class Walker extends EventEmitter<WalkerEmitter> {
 
   protected fragment: SchemaFragment;
   protected schemaNode: RegularNode | RootNode;
+  protected readonly schemaDialect: SchemaDialect;
 
   private processedFragments: WeakMap<ProcessedFragment, SchemaNode>;
   private readonly hooks: Partial<Dictionary<WalkerHookHandler, WalkerHookAction>>;
@@ -34,6 +37,7 @@ export class Walker extends EventEmitter<WalkerEmitter> {
   constructor(protected readonly root: RootNode, protected readonly walkingOptions: WalkingOptions) {
     super();
 
+    this.schemaDialect = walkingOptions.schemaDialect;
     this.path = [];
     this.depth = -1;
     this.fragment = root.fragment;
@@ -124,14 +128,21 @@ export class Walker extends EventEmitter<WalkerEmitter> {
 
     if (!isRootNode(schemaNode)) {
       schemaNode.parent = initialSchemaNode;
-      schemaNode.subpath = this.path.slice(initialSchemaNode.path.length);
+      runInAction(() => {
+        schemaNode.subpath.push(...this.path.slice(initialSchemaNode.path.length));
+      });
     }
 
     if ('children' in initialSchemaNode && !isRootNode(schemaNode)) {
       if (initialSchemaNode.children === void 0) {
         (initialSchemaNode as RegularNode).children = [schemaNode];
+        makeObservable(initialSchemaNode, {
+          children: observable,
+        }); // todo: dispose
       } else {
-        initialSchemaNode.children!.push(schemaNode);
+        runInAction(() => {
+          initialSchemaNode.children!.push(schemaNode);
+        });
       }
     }
 
@@ -301,13 +312,16 @@ export class Walker extends EventEmitter<WalkerEmitter> {
       try {
         const merged = mergeOneOrAnyOf(fragment, path, walkingOptions);
         if (merged.length === 1) {
-          return [new RegularNode(merged[0]), initialFragment];
+          return [new RegularNode(merged[0], this.schemaDialect), initialFragment];
         } else {
           const combiner = SchemaCombinerName.OneOf in fragment ? SchemaCombinerName.OneOf : SchemaCombinerName.AnyOf;
           return [
-            new RegularNode({
-              [combiner]: merged,
-            }),
+            new RegularNode(
+              {
+                [combiner]: merged,
+              },
+              this.schemaDialect,
+            ),
             initialFragment,
           ];
         }
@@ -323,6 +337,6 @@ export class Walker extends EventEmitter<WalkerEmitter> {
       return retrieved;
     }
 
-    return [new RegularNode(fragment), initialFragment];
+    return [new RegularNode(fragment, this.schemaDialect), initialFragment];
   }
 }

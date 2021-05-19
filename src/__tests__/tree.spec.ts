@@ -557,4 +557,34 @@ describe('SchemaTree', () => {
       });
     });
   });
+
+  describe('dumping', () => {
+    const schema: JSONSchema4 = {
+      type: 'object',
+      properties: {
+        foo: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              user: {
+                $ref: '#/properties/bar',
+              },
+            },
+          },
+        },
+        bar: {
+          $ref: '#/properties/baz',
+        },
+        baz: {
+          $ref: '#/properties/foo',
+        },
+      },
+    };
+
+    const tree = new SchemaTree(schema);
+    tree.populate();
+
+    expect(JSON.stringify(tree));
+  });
 });

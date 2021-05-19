@@ -1,5 +1,5 @@
-import { SchemaNodeKind } from '../nodes/types';
-import type { SchemaFragment } from '../types';
+import { SchemaNodeKind } from '../../nodes/types';
+import type { SchemaFragment } from '../../types';
 
 export function inferType(fragment: SchemaFragment): SchemaNodeKind | null {
   if ('properties' in fragment || 'additionalProperties' in fragment || 'patternProperties' in fragment) {

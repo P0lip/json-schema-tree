@@ -24,5 +24,3 @@ export enum SchemaCombinerName {
   AnyOf = 'anyOf',
   OneOf = 'oneOf',
 }
-
-export { SchemaAnnotations } from '../accessors/getAnnotations';

@@ -1,4 +1,4 @@
-import { SchemaNodeKind } from '../../nodes/types';
+import { SchemaNodeKind } from '../../../nodes/types';
 
 const VALID_TYPES = Object.values(SchemaNodeKind);
 
